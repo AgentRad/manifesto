@@ -13,6 +13,11 @@
   <body>
     <div id="root"></div>
     <style>
+      /* The closer's parent has framer-motion inline opacity:0 + translateY(20px) that
+         never animates to visible (my DOM strip broke the intersection observer). Force it. */
+      .ag-mfst-closer, .ag-mfst-closer * { opacity: 1 !important; }
+      div:has(> .ag-mfst-closer) { opacity: 1 !important; transform: none !important; }
+
       /* Closing line "Agent is building it." — first-pass Inter headline treatment. */
       .ag-mfst-closer {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
