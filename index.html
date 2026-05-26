@@ -12,6 +12,23 @@
   </head>
   <body>
     <div id="root"></div>
+    <style>
+      /* Closing line "Agent is building it." gets the headline treatment. */
+      .ag-mfst-closer {
+        font-size: clamp(40px, 6.4vw, 84px) !important;
+        line-height: 0.95 !important;
+        letter-spacing: -0.035em !important;
+        font-weight: 900 !important;
+        margin: 24px 0 0 !important;
+        text-wrap: balance;
+      }
+      /* Kill the trailing white void left over after the bottom block was stripped. */
+      #root > div.min-h-screen { min-height: 0 !important; }
+      main.flex.flex-col.items-center { padding-bottom: 56px !important; }
+      @media (min-width: 768px) {
+        main.flex.flex-col.items-center { padding-bottom: 80px !important; }
+      }
+    </style>
     <script>
       // Strip the closing CTA block from the manifesto: "This is how." heading,
       // the bouncing down arrow, the "Agent Business Model" button, and the footer
@@ -77,6 +94,13 @@
             });
             if (allSocial && sibs.length >= 2) {
               parent.parentNode && parent.parentNode.removeChild(parent);
+              did = true;
+            }
+          });
+          // 5. Promote "Agent is building it." to the closing-statement size.
+          document.querySelectorAll('p, h1, h2, h3').forEach(function (el) {
+            if ((el.textContent || '').trim() === 'Agent is building it.' && !el.classList.contains('ag-mfst-closer')) {
+              el.classList.add('ag-mfst-closer');
               did = true;
             }
           });
