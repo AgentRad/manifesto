@@ -28,6 +28,8 @@
       @media (min-width: 768px) {
         main.flex.flex-col.items-center { padding-bottom: 80px !important; }
       }
+      /* The empty <section> + <footer> that held the stripped CTA & socials still pad the page. */
+      main ~ section, main ~ footer { display: none !important; }
     </style>
     <script>
       // Strip the closing CTA block from the manifesto: "This is how." heading,
