@@ -13,45 +13,80 @@
   <body>
     <div id="root"></div>
     <script>
-      // Strip the "This is how." → Agent Business Model CTA → socials block from the bottom of the page.
-      // React renders the manifesto into #root; we wait, then walk siblings after the "This is how." section and remove them.
+      // Strip the closing CTA block from the manifesto: "This is how." heading,
+      // the bouncing down arrow, the "Agent Business Model" button, and the footer
+      // social-icon row. React renders into #root, so we retry + observe.
       (function () {
+        function removeUp(el, levels) {
+          for (var i = 0; i < levels && el && el.parentNode; i++) el = el.parentElement;
+          if (el && el.parentNode) el.parentNode.removeChild(el);
+        }
         function strip() {
-          var ps = document.querySelectorAll('p');
+          var did = false;
+          // 1. "This is how." headline + everything after it inside the same column.
+          var ps = document.querySelectorAll('p, h1, h2, h3');
           for (var i = 0; i < ps.length; i++) {
             if ((ps[i].textContent || '').trim() === 'This is how.') {
-              var wrap = ps[i].parentElement; // section container for the heading
-              if (!wrap) return true;
-              // Remove everything after the heading section within the same content column.
-              var sibling = wrap.nextElementSibling;
-              while (sibling) {
-                var n = sibling.nextElementSibling;
-                sibling.parentNode.removeChild(sibling);
-                sibling = n;
+              var wrap = ps[i].parentElement;
+              if (wrap) {
+                var sib = wrap.nextElementSibling;
+                while (sib) { var n = sib.nextElementSibling; sib.parentNode.removeChild(sib); sib = n; }
+                wrap.parentNode.removeChild(wrap);
+                did = true;
               }
-              // Remove the heading section itself.
-              wrap.parentNode.removeChild(wrap);
-              // Also nuke any social-icon row that lives outside <main> (footer-style row of svg icons).
-              document.querySelectorAll('a[href*="instagram"],a[href*="tiktok"],a[href*="youtube"],a[href*="twitter"],a[href*="x.com"]').forEach(function(a){
-                // Only kill social rows that are below the manifesto content (likely in a flex/grid icon group with siblings limited to socials).
-                var parent = a.parentElement;
-                if (!parent) return;
-                var sibs = Array.from(parent.children);
-                var allSocial = sibs.every(function(s){ var h = s.getAttribute('href') || ''; return /instagram|tiktok|youtube|twitter|x\.com/.test(h); });
-                if (allSocial && sibs.length >= 2) {
-                  parent.parentNode && parent.parentNode.removeChild(parent);
-                }
-              });
-              return true;
+              break;
             }
           }
-          return false;
+          // 2. "Agent Business Model" button — remove the button and its arrow/wrapper.
+          var btns = document.querySelectorAll('a, button');
+          for (var j = 0; j < btns.length; j++) {
+            var t = (btns[j].textContent || '').trim();
+            if (t === 'Agent Business Model' || /^Agent\s+Business\s+Model$/i.test(t)) {
+              // Walk up 2-3 levels to catch the section wrapper (which usually also holds the arrow).
+              var sect = btns[j];
+              var hops = 0;
+              while (sect && sect.parentElement && hops < 3) {
+                var p = sect.parentElement;
+                if (p.tagName === 'BODY' || p.id === 'root' || p.tagName === 'MAIN') break;
+                sect = p; hops++;
+              }
+              if (sect && sect.parentNode) sect.parentNode.removeChild(sect);
+              did = true;
+              break;
+            }
+          }
+          // 3. Bouncing down-arrow that pointed at the button (now orphaned).
+          //    Match an element whose only content is the down-arrow glyph ↓.
+          document.querySelectorAll('span, div, p').forEach(function (n) {
+            if (n.children.length === 0) {
+              var txt = (n.textContent || '').trim();
+              if (txt === '↓' || txt === '⬇' || txt === '&darr;') {
+                n.parentNode && n.parentNode.removeChild(n);
+                did = true;
+              }
+            }
+          });
+          // 4. Social-icon row in the footer.
+          document.querySelectorAll('a[href*="instagram"],a[href*="tiktok"],a[href*="youtube"],a[href*="twitter"],a[href*="x.com"]').forEach(function (a) {
+            var parent = a.parentElement;
+            if (!parent) return;
+            var sibs = Array.from(parent.children);
+            var allSocial = sibs.every(function (s) {
+              var h = s.getAttribute && s.getAttribute('href') || '';
+              return /instagram|tiktok|youtube|twitter|x\.com/.test(h);
+            });
+            if (allSocial && sibs.length >= 2) {
+              parent.parentNode && parent.parentNode.removeChild(parent);
+              did = true;
+            }
+          });
+          return did;
         }
         var tries = 0;
         var t = setInterval(function () {
-          if (strip() || ++tries > 30) clearInterval(t);
-        }, 200);
-        // Also rerun after any late re-renders.
+          strip();
+          if (++tries > 60) clearInterval(t);
+        }, 150);
         new MutationObserver(function () { strip(); }).observe(document.documentElement, { childList: true, subtree: true });
       })();
     </script>
